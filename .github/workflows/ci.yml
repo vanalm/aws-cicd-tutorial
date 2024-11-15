@@ -1,0 +1,41 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install AWS SAM CLI
+      run: |
+        pip install aws-sam-cli
+
+    - name: Configure AWS credentials from IAM Role
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::245524871530:role/aws-cicd-tutorial-role
+        aws-region: us-west-2
+
+    - name: Build SAM Application
+      run: |
+        sam build
+
+    - name: Deploy SAM Application
+      run: |
+        sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name twilio-lambda-app --capabilities CAPABILITY_NAMED_IAM
